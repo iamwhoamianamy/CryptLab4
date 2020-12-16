@@ -21,6 +21,7 @@ namespace CryptLab4
             Console.WriteLine("<1> Зашифровать файл");
             Console.WriteLine("<2> Дешифровать файл");
             Console.WriteLine("<3> Зашифровать только пиксели файла");
+            Console.WriteLine("<4> Дешифровать только пиксели файла");
             Console.WriteLine("<0> Выйти(");
 
             string choice = Console.ReadLine();
@@ -31,10 +32,10 @@ namespace CryptLab4
                {
                   Console.WriteLine("Введите название файла для шифрования:");
                   string inFileName = Console.ReadLine();
-                  byte[] ToEncrypt;
+                  byte[] toEncrypt;
                   try
                   {
-                     ToEncrypt = File.ReadAllBytes(path + inFileName);
+                     toEncrypt = File.ReadAllBytes(path + inFileName);
                   }
                   catch (Exception)
                   {
@@ -46,10 +47,10 @@ namespace CryptLab4
                   string outFileName = Console.ReadLine();
 
                   Console.WriteLine("Введите пароль для шифрования:");
-                  byte[] Password = Encoding.UTF8.GetBytes(Console.ReadLine());
+                  byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
                   var hashAlg = GetHashAlgorithm();
-                  File.WriteAllBytes(path + outFileName, Encrypt(ToEncrypt, Password, hashAlg, CipherMode.CBC));
+                  File.WriteAllBytes(path + outFileName, Encrypt(toEncrypt, password, hashAlg, CipherMode.CBC));
 
                   Console.WriteLine("Шифрование прошло успешно!");
                   break;
@@ -58,10 +59,10 @@ namespace CryptLab4
                {
                   Console.WriteLine("Введите название файла для дешифровки:");
                   string inFileName = Console.ReadLine();
-                  byte[] ToDecrypt;
+                  byte[] toDecrypt;
                   try
                   {
-                     ToDecrypt = File.ReadAllBytes(path + inFileName);
+                     toDecrypt = File.ReadAllBytes(path + inFileName);
                   }
                   catch (Exception)
                   {
@@ -73,14 +74,14 @@ namespace CryptLab4
                   string outFileName = Console.ReadLine();
 
                   Console.WriteLine("Введите пароль для дешифровки:");
-                  byte[] Password = Encoding.UTF8.GetBytes(Console.ReadLine());
+                  byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
                   var hashAlg = GetHashAlgorithm();
                   try
                   {
-                     File.WriteAllBytes(path + outFileName, Decrypt(ToDecrypt, Password, hashAlg, CipherMode.CBC));
+                     File.WriteAllBytes(path + outFileName, Decrypt(toDecrypt, password, hashAlg, CipherMode.CBC));
                   }
-                  catch(Exception)
+                  catch (Exception)
                   {
                      Console.WriteLine("Неверный пароль или алгоритм генерации хеша!");
                      break;
@@ -113,36 +114,89 @@ namespace CryptLab4
                      for (int j = 0; j < w; j++)
                      {
                         Color pixel = img.GetPixel(j, i);
-                        toEncrypt[i * w * 4 + j * 4 + 0] = pixel.A;
-                        toEncrypt[i * w * 4 + j * 4 + 1] = pixel.R;
-                        toEncrypt[i * w * 4 + j * 4 + 2] = pixel.G;
-                        toEncrypt[i * w * 4 + j * 4 + 3] = pixel.B;
+                        toEncrypt[(i * w + j) * 4 + 0] = pixel.A;
+                        toEncrypt[(i * w + j) * 4 + 1] = pixel.R;
+                        toEncrypt[(i * w + j) * 4 + 2] = pixel.G;
+                        toEncrypt[(i * w + j) * 4 + 3] = pixel.B;
                      }
 
                   Console.WriteLine("Введите название файла для вывода:");
                   string outFileName = Console.ReadLine();
 
                   Console.WriteLine("Введите пароль для шифрования:");
-                  byte[] Password = Encoding.UTF8.GetBytes(Console.ReadLine());
+                  byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
                   var hashAlg = GetHashAlgorithm();
-                  byte[] encData = Encrypt(toEncrypt.ToArray(), Password, hashAlg, CipherMode.ECB);
-
-                  Bitmap outImage = new Bitmap(w, h, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                  byte[] encData = Encrypt(toEncrypt.ToArray(), password, hashAlg, CipherMode.ECB);
 
                   for (int i = 0; i < h; i++)
                      for (int j = 0; j < w; j++)
                      {
-                        byte A = encData[i * w * 4 + j * 4 + 0];
-                        byte R = encData[i * w * 4 + j * 4 + 1];
-                        byte G = encData[i * w * 4 + j * 4 + 2];
-                        byte B = encData[i * w * 4 + j * 4 + 3];
-                        outImage.SetPixel(j, i, Color.FromArgb(A, R, G, B));
+                        byte A = encData[(i * w + j) * 4 + 0];
+                        byte R = encData[(i * w + j) * 4 + 1];
+                        byte G = encData[(i * w + j) * 4 + 2];
+                        byte B = encData[(i * w + j) * 4 + 3];
+                        img.SetPixel(j, i, Color.FromArgb(A, R, G, B));
                      }
 
-                  outImage.Save(path + outFileName);
+                  img.Save(path + outFileName, System.Drawing.Imaging.ImageFormat.Png);
 
                   Console.WriteLine("Шифрование прошло успешно!");
+                  break;
+               }
+               case "4":
+               {
+                  Console.WriteLine("Введите название файла для дешифровки:");
+                  string inFileName = Console.ReadLine();
+
+                  Bitmap img;
+                  try
+                  {
+                     img = new Bitmap(path + inFileName);
+                  }
+                  catch (Exception)
+                  {
+                     Console.WriteLine("Нет такого файла!");
+                     break;
+                  }
+
+                  int w = img.Width;
+                  int h = img.Height;
+
+                  byte[] toDecrypt = new byte[h * w * 4];
+
+                  for (int i = 0; i < h; i++)
+                     for (int j = 0; j < w; j++)
+                     {
+                        Color pixel = img.GetPixel(j, i);
+                        toDecrypt[(i * w + j) * 4 + 0] = pixel.A;
+                        toDecrypt[(i * w + j) * 4 + 1] = pixel.R;
+                        toDecrypt[(i * w + j) * 4 + 2] = pixel.G;
+                        toDecrypt[(i * w + j) * 4 + 3] = pixel.B;
+                     }
+
+                  Console.WriteLine("Введите название файла для вывода:");
+                  string outFileName = Console.ReadLine();
+
+                  Console.WriteLine("Введите пароль для дешифровки:");
+                  byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
+
+                  var hashAlg = GetHashAlgorithm();
+                  byte[] decData = Decrypt(toDecrypt.ToArray(), password, hashAlg, CipherMode.ECB);
+
+                  for (int i = 0; i < h; i++)
+                     for (int j = 0; j < w; j++)
+                     {
+                        byte A = decData[(i * w + j) * 4 + 0];
+                        byte R = decData[(i * w + j) * 4 + 1];
+                        byte G = decData[(i * w + j) * 4 + 2];
+                        byte B = decData[(i * w + j) * 4 + 3];
+                        img.SetPixel(j, i, Color.FromArgb(A, R, G, B));
+                     }
+
+                  img.Save(path + outFileName, System.Drawing.Imaging.ImageFormat.Png);
+
+                  Console.WriteLine("Дешифровка прошла успешно!");
                   break;
                }
                case "0":
@@ -209,7 +263,7 @@ namespace CryptLab4
             aes.Mode = cipherMode;
             aes.Key = hashAlg.ComputeHash(password);
             aes.IV = aes.Key.ToList().Take(16).ToArray();
-            aes.Padding = PaddingMode.PKCS7;
+            aes.Padding = PaddingMode.Zeros;
 
             return PerformCrypt(aes.CreateEncryptor(), dataToEncrypt);
          }
@@ -222,11 +276,11 @@ namespace CryptLab4
             aes.Mode = cipherMode;
             aes.Key = hashAlg.ComputeHash(password);
             aes.IV = aes.Key.ToList().Take(16).ToArray();
-            aes.Padding = PaddingMode.PKCS7;
+            aes.Padding = PaddingMode.Zeros;
             var decryptor = aes.CreateDecryptor();
 
             return PerformCrypt(aes.CreateDecryptor(), dataToDecrypt);
-         }   
+         }
       }
 
       public static byte[] PerformCrypt(ICryptoTransform transform, byte[] data)
