@@ -49,8 +49,7 @@ namespace CryptLab4
                   Console.WriteLine("Введите пароль для шифрования:");
                   byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
-                  var hashAlg = GetHashAlgorithm();
-                  File.WriteAllBytes(path + outFileName, Encrypt(toEncrypt, password, hashAlg, CipherMode.CBC));
+                  File.WriteAllBytes(path + outFileName, Encrypt(toEncrypt, password, GetHashAlgorithm(), CipherMode.CBC));
 
                   Console.WriteLine("Шифрование прошло успешно!");
                   break;
@@ -76,10 +75,9 @@ namespace CryptLab4
                   Console.WriteLine("Введите пароль для дешифровки:");
                   byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
-                  var hashAlg = GetHashAlgorithm();
                   try
                   {
-                     File.WriteAllBytes(path + outFileName, Decrypt(toDecrypt, password, hashAlg, CipherMode.CBC));
+                     File.WriteAllBytes(path + outFileName, Decrypt(toDecrypt, password, GetHashAlgorithm(), CipherMode.CBC));
                   }
                   catch (Exception)
                   {
@@ -105,20 +103,7 @@ namespace CryptLab4
                      break;
                   }
 
-                  int w = img.Width;
-                  int h = img.Height;
-
-                  byte[] toEncrypt = new byte[h * w * 4];
-
-                  for (int i = 0; i < h; i++)
-                     for (int j = 0; j < w; j++)
-                     {
-                        Color pixel = img.GetPixel(j, i);
-                        toEncrypt[(i * w + j) * 4 + 0] = pixel.A;
-                        toEncrypt[(i * w + j) * 4 + 1] = pixel.R;
-                        toEncrypt[(i * w + j) * 4 + 2] = pixel.G;
-                        toEncrypt[(i * w + j) * 4 + 3] = pixel.B;
-                     }
+                  byte[] toEncrypt = PixelsToBytes(img);
 
                   Console.WriteLine("Введите название файла для вывода:");
                   string outFileName = Console.ReadLine();
@@ -126,18 +111,9 @@ namespace CryptLab4
                   Console.WriteLine("Введите пароль для шифрования:");
                   byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
-                  var hashAlg = GetHashAlgorithm();
-                  byte[] encData = Encrypt(toEncrypt.ToArray(), password, hashAlg, CipherMode.ECB);
+                  byte[] encData = Encrypt(toEncrypt.ToArray(), password, GetHashAlgorithm(), CipherMode.ECB);
 
-                  for (int i = 0; i < h; i++)
-                     for (int j = 0; j < w; j++)
-                     {
-                        byte A = encData[(i * w + j) * 4 + 0];
-                        byte R = encData[(i * w + j) * 4 + 1];
-                        byte G = encData[(i * w + j) * 4 + 2];
-                        byte B = encData[(i * w + j) * 4 + 3];
-                        img.SetPixel(j, i, Color.FromArgb(A, R, G, B));
-                     }
+                  SetPixels(img, encData);
 
                   img.Save(path + outFileName, System.Drawing.Imaging.ImageFormat.Png);
 
@@ -160,20 +136,7 @@ namespace CryptLab4
                      break;
                   }
 
-                  int w = img.Width;
-                  int h = img.Height;
-
-                  byte[] toDecrypt = new byte[h * w * 4];
-
-                  for (int i = 0; i < h; i++)
-                     for (int j = 0; j < w; j++)
-                     {
-                        Color pixel = img.GetPixel(j, i);
-                        toDecrypt[(i * w + j) * 4 + 0] = pixel.A;
-                        toDecrypt[(i * w + j) * 4 + 1] = pixel.R;
-                        toDecrypt[(i * w + j) * 4 + 2] = pixel.G;
-                        toDecrypt[(i * w + j) * 4 + 3] = pixel.B;
-                     }
+                  byte[] toDecrypt = PixelsToBytes(img);
 
                   Console.WriteLine("Введите название файла для вывода:");
                   string outFileName = Console.ReadLine();
@@ -181,18 +144,9 @@ namespace CryptLab4
                   Console.WriteLine("Введите пароль для дешифровки:");
                   byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
-                  var hashAlg = GetHashAlgorithm();
-                  byte[] decData = Decrypt(toDecrypt.ToArray(), password, hashAlg, CipherMode.ECB);
+                  byte[] decData = Decrypt(toDecrypt.ToArray(), password, GetHashAlgorithm(), CipherMode.ECB);
 
-                  for (int i = 0; i < h; i++)
-                     for (int j = 0; j < w; j++)
-                     {
-                        byte A = decData[(i * w + j) * 4 + 0];
-                        byte R = decData[(i * w + j) * 4 + 1];
-                        byte G = decData[(i * w + j) * 4 + 2];
-                        byte B = decData[(i * w + j) * 4 + 3];
-                        img.SetPixel(j, i, Color.FromArgb(A, R, G, B));
-                     }
+                  SetPixels(img, decData);
 
                   img.Save(path + outFileName, System.Drawing.Imaging.ImageFormat.Png);
 
@@ -289,11 +243,45 @@ namespace CryptLab4
          {
             using (var csEncrypt = new CryptoStream(msDecrypt, transform, CryptoStreamMode.Write))
             {
-               csEncrypt.Write(data, 0, data.Length);
+               csEncrypt.Write(data);
                csEncrypt.FlushFinalBlock();
                return msDecrypt.ToArray();
             }
          }
+      }
+
+      public static byte[] PixelsToBytes(Bitmap img)
+      {
+         int w = img.Width;
+         int h = img.Height;
+         byte[] res = new byte[h * w * 4];
+
+         for (int i = 0; i < h; i++)
+            for (int j = 0; j < w; j++)
+            {
+               Color pixel = img.GetPixel(j, i);
+               res[(i * w + j) * 4 + 0] = pixel.A;
+               res[(i * w + j) * 4 + 1] = pixel.R;
+               res[(i * w + j) * 4 + 2] = pixel.G;
+               res[(i * w + j) * 4 + 3] = pixel.B;
+            }
+         return res;
+      }
+
+      public static void SetPixels(Bitmap img, byte[] bytes)
+      {
+         int w = img.Width;
+         int h = img.Height;
+
+         for (int i = 0; i < h; i++)
+            for (int j = 0; j < w; j++)
+            {
+               byte A = bytes[(i * w + j) * 4 + 0];
+               byte R = bytes[(i * w + j) * 4 + 1];
+               byte G = bytes[(i * w + j) * 4 + 2];
+               byte B = bytes[(i * w + j) * 4 + 3];
+               img.SetPixel(j, i, Color.FromArgb(A, R, G, B));
+            }
       }
    }
 }
