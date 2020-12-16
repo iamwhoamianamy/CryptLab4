@@ -20,7 +20,7 @@ namespace CryptLab4
             Console.WriteLine("Выберете опцию:");
             Console.WriteLine("<1> Зашифровать файл");
             Console.WriteLine("<2> Дешифровать файл");
-            Console.WriteLine("<3> Зашифровать только пиксели файл");
+            Console.WriteLine("<3> Зашифровать только пиксели файла");
             Console.WriteLine("<0> Выйти(");
 
             string choice = Console.ReadLine();
@@ -76,8 +76,15 @@ namespace CryptLab4
                   byte[] Password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
                   var hashAlg = GetHashAlgorithm();
-                  File.WriteAllBytes(path + outFileName, Decrypt(ToDecrypt, Password, hashAlg, CipherMode.CBC));
-
+                  try
+                  {
+                     File.WriteAllBytes(path + outFileName, Decrypt(ToDecrypt, Password, hashAlg, CipherMode.CBC));
+                  }
+                  catch(Exception)
+                  {
+                     Console.WriteLine("Неверный пароль или алгоритм генерации хеша!");
+                     break;
+                  }
                   Console.WriteLine("Дешифровка прошла успешно!");
                   break;
                }
@@ -160,7 +167,7 @@ namespace CryptLab4
          while (repeat)
          {
             repeat = false;
-            Console.WriteLine("Выберете алгоритм генерации хэша:");
+            Console.WriteLine("Выберете алгоритм генерации хеша:");
             Console.WriteLine("<1> SHA-256");
             Console.WriteLine("<2> MD5");
             Console.WriteLine("<3> SHA1");
