@@ -49,7 +49,7 @@ namespace CryptLab4
                   Console.WriteLine("Введите пароль для шифрования:");
                   byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
-                  File.WriteAllBytes(path + outFileName, Encrypt(toEncrypt, password, GetHashAlgorithm(), CipherMode.CBC));
+                  File.WriteAllBytes(path + outFileName, Encrypt(toEncrypt, password, GetHashAlgorithm(), CipherMode.CBC, PaddingMode.PKCS7));
 
                   Console.WriteLine("Шифрование прошло успешно!");
                   break;
@@ -77,7 +77,7 @@ namespace CryptLab4
 
                   try
                   {
-                     File.WriteAllBytes(path + outFileName, Decrypt(toDecrypt, password, GetHashAlgorithm(), CipherMode.CBC));
+                     File.WriteAllBytes(path + outFileName, Decrypt(toDecrypt, password, GetHashAlgorithm(), CipherMode.CBC, PaddingMode.PKCS7));
                   }
                   catch (Exception)
                   {
@@ -111,7 +111,7 @@ namespace CryptLab4
                   Console.WriteLine("Введите пароль для шифрования:");
                   byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
-                  byte[] encData = Encrypt(toEncrypt.ToArray(), password, GetHashAlgorithm(), CipherMode.ECB);
+                  byte[] encData = Encrypt(toEncrypt.ToArray(), password, GetHashAlgorithm(), CipherMode.ECB, PaddingMode.None);
 
                   SetPixels(img, encData);
 
@@ -144,7 +144,7 @@ namespace CryptLab4
                   Console.WriteLine("Введите пароль для дешифровки:");
                   byte[] password = Encoding.UTF8.GetBytes(Console.ReadLine());
 
-                  byte[] decData = Decrypt(toDecrypt.ToArray(), password, GetHashAlgorithm(), CipherMode.ECB);
+                  byte[] decData = Decrypt(toDecrypt.ToArray(), password, GetHashAlgorithm(), CipherMode.ECB, PaddingMode.None);
 
                   SetPixels(img, decData);
 
@@ -210,27 +210,27 @@ namespace CryptLab4
          return res;
       }
 
-      public static byte[] Encrypt(byte[] dataToEncrypt, byte[] password, HashAlgorithm hashAlg, CipherMode cipherMode)
+      public static byte[] Encrypt(byte[] dataToEncrypt, byte[] password, HashAlgorithm hashAlg, CipherMode cipherMode, PaddingMode paddingMode)
       {
          using (var aes = Aes.Create())
          {
             aes.Mode = cipherMode;
             aes.Key = hashAlg.ComputeHash(password).ToList().Take(32).ToArray();
             aes.IV = aes.Key.ToList().Take(16).ToArray();
-            aes.Padding = PaddingMode.Zeros;
+            aes.Padding = paddingMode;
 
             return PerformCrypt(aes.CreateEncryptor(), dataToEncrypt);
          }
       }
 
-      public static byte[] Decrypt(byte[] dataToDecrypt, byte[] password, HashAlgorithm hashAlg, CipherMode cipherMode)
+      public static byte[] Decrypt(byte[] dataToDecrypt, byte[] password, HashAlgorithm hashAlg, CipherMode cipherMode, PaddingMode paddingMode)
       {
          using (var aes = Aes.Create())
          {
             aes.Mode = cipherMode;
             aes.Key = hashAlg.ComputeHash(password).ToList().Take(32).ToArray();
             aes.IV = aes.Key.ToList().Take(16).ToArray();
-            aes.Padding = PaddingMode.Zeros;
+            aes.Padding = paddingMode;
             var decryptor = aes.CreateDecryptor();
 
             return PerformCrypt(aes.CreateDecryptor(), dataToDecrypt);
