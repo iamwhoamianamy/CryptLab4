@@ -178,7 +178,7 @@ namespace CryptLab4
             Console.WriteLine("Выберете алгоритм генерации хеша:");
             Console.WriteLine("<1> SHA-256");
             Console.WriteLine("<2> MD5");
-            Console.WriteLine("<3> SHA1");
+            Console.WriteLine("<3> SHA-512");
 
             string hashChoice = Console.ReadLine();
 
@@ -196,7 +196,7 @@ namespace CryptLab4
                }
                case "3":
                {
-                  res = HashAlgorithm.Create("SHA1");
+                  res = HashAlgorithm.Create("SHA-512");
                   break;
                }
                default:
@@ -215,7 +215,7 @@ namespace CryptLab4
          using (var aes = Aes.Create())
          {
             aes.Mode = cipherMode;
-            aes.Key = hashAlg.ComputeHash(password);
+            aes.Key = hashAlg.ComputeHash(password).ToList().Take(32).ToArray();
             aes.IV = aes.Key.ToList().Take(16).ToArray();
             aes.Padding = PaddingMode.Zeros;
 
@@ -228,7 +228,7 @@ namespace CryptLab4
          using (var aes = Aes.Create())
          {
             aes.Mode = cipherMode;
-            aes.Key = hashAlg.ComputeHash(password);
+            aes.Key = hashAlg.ComputeHash(password).ToList().Take(32).ToArray();
             aes.IV = aes.Key.ToList().Take(16).ToArray();
             aes.Padding = PaddingMode.Zeros;
             var decryptor = aes.CreateDecryptor();
